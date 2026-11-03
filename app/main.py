@@ -5,6 +5,7 @@ from sqlalchemy import text
 
 import models  # noqa: F401  (registers the tables)
 from db import Base, engine
+from routes import router
 from seed import seed
 
 
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="bola-detect target app (intentionally vulnerable)", lifespan=lifespan)
+app.include_router(router)
 
 
 @app.get("/health")
