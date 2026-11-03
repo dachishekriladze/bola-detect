@@ -1,9 +1,21 @@
-import os
-from fastapi import FastAPI
-from sqlalchemy import create_engine, text
+from contextlib import asynccontextmanager
 
-engine = create_engine(os.environ["DATABASE_URL"])
-app = FastAPI(title="bola-detect target app (intentionally vulnerable)")
+from fastapi import FastAPI
+from sqlalchemy import text
+
+import models  # noqa: F401  (registers the tables)
+from db import Base, engine
+from seed import seed
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(engine)
+    seed()
+    yield
+
+
+app = FastAPI(title="bola-detect target app (intentionally vulnerable)", lifespan=lifespan)
 
 
 @app.get("/health")
