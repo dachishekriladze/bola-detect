@@ -1,7 +1,8 @@
-"""Normal-traffic generator for the bola-detect lab (Locust).
+"""Traffic generator for the bola-detect lab (Locust).
 
 Every request carries a unique X-Request-ID, a simulated timestamp (X-Sim-Time)
 and a per-user source IP (X-Lab-Source-IP). Ground truth goes to labels.csv.
+Attack scenarios are only active when the ATTACKS environment variable lists them.
 """
 import csv
 import os
@@ -16,6 +17,7 @@ from locust import HttpUser, between, events, task
 SPEEDUP = float(os.environ.get("SPEEDUP", "120"))  # 1 real second = 120 simulated seconds
 SEED = int(os.environ.get("SEED", "1"))
 LABELS_PATH = os.environ.get("LABELS_PATH", "datasets/labels.csv")
+ATTACKS = {a.strip() for a in os.environ.get("ATTACKS", "").split(",") if a.strip()}
 SIM_START = datetime(2026, 11, 1, 8, 0, 0, tzinfo=timezone.utc)
 
 NORMAL_USERS = ["alice", "bob", "carol", "dave", "erin"]
@@ -34,10 +36,10 @@ def sim_now() -> datetime:
     return SIM_START + timedelta(seconds=(time.monotonic() - _state["start"]) * SPEEDUP)
 
 
-def write_label(request_id, label, scenario, actor, sim_time):
+def write_label(request_id, label, scenario, actor, sim_time, episode):
     with _lock:
         if _state["file"] and not _state["file"].closed:
-            _state["writer"].writerow([request_id, label, scenario, actor, sim_time])
+            _state["writer"].writerow([request_id, label, scenario, actor, sim_time, episode])
             _state["file"].flush()
 
 
@@ -46,7 +48,7 @@ def on_test_start(environment, **kwargs):
     os.makedirs(os.path.dirname(LABELS_PATH) or ".", exist_ok=True)
     _state["file"] = open(LABELS_PATH, "w", newline="", encoding="utf-8")
     _state["writer"] = csv.writer(_state["file"])
-    _state["writer"].writerow(["request_id", "label", "scenario", "actor", "sim_time"])
+    _state["writer"].writerow(["request_id", "label", "scenario", "actor", "sim_time", "episode"])
     _state["start"] = time.monotonic()
 
 
@@ -59,13 +61,13 @@ def on_test_stop(environment, **kwargs):
 
 class LabUser(HttpUser):
     abstract = True
-    label = "normal"
     scenario = "unset"
 
     def on_start(self):
         self.client.headers["Connection"] = "close"  # avoid stale keep-alive connections
         self.username = self.pick_username()
         self.token = None
+        self.episode = ""
         self.last_sim = datetime.min.replace(tzinfo=timezone.utc)
         self.login()
         self.refresh_my_objects()
@@ -87,8 +89,9 @@ class LabUser(HttpUser):
         }
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
-        write_label(request_id, self.label, scenario or self.scenario,
-                    self.username, headers["X-Sim-Time"])
+        label = "attack" if self.episode else "normal"
+        write_label(request_id, label, scenario or self.scenario, self.username,
+                    headers["X-Sim-Time"], self.episode)
         with self.client.request(method, path, name=name, headers=headers,
                                  catch_response=True, **kwargs) as resp:
             if resp.status_code in expected:
@@ -182,3 +185,44 @@ class ExporterUser(LabUser):
         for invoice_id in range(start + 1, start + count):
             self.call("GET", f"/invoices/{invoice_id}", "/invoices/{id}",
                       scenario="admin_export", gap=random.uniform(0.1, 0.5))
+
+
+# ---------------------------------------------------------------------------
+# Attackers (inactive unless listed in the ATTACKS environment variable)
+# ---------------------------------------------------------------------------
+
+class AttackerUser(LabUser):
+    abstract = True
+    scenario = "attacker_idle"
+    wait_time = between(120, 300)  # real seconds between attack episodes
+
+    def on_start(self):
+        super().on_start()
+        time.sleep(random.uniform(60, 240))  # let normal traffic build some history first
+
+    def start_episode(self, kind):
+        self.episode = f"{kind}-{uuid.uuid4().hex[:8]}"
+        self.scenario = f"attack_{kind}"
+
+    def end_episode(self):
+        self.episode = ""
+        self.scenario = "attacker_idle"
+
+
+if "sequential" in ATTACKS:
+
+    class SequentialEnumerator(AttackerUser):
+        fixed_count = 2
+
+        @task
+        def enumerate_invoices(self):
+            self.start_episode("sequential")
+            try:
+                start = random.randint(1, TOTAL_INVOICES - 79)
+                count = random.randint(40, 80)
+                self.call("GET", f"/invoices/{start}", "/invoices/{id}")
+                for invoice_id in range(start + 1, start + count):
+                    self.call("GET", f"/invoices/{invoice_id}", "/invoices/{id}",
+                              gap=random.uniform(0.05, 0.3))
+            finally:
+                self.end_episode()
