@@ -4,6 +4,15 @@ Every request carries a unique X-Request-ID, a simulated timestamp (X-Sim-Time)
 and a per-user source IP (X-Lab-Source-IP). Ground truth goes to labels.csv.
 Attack scenarios are only active when the ATTACKS environment variable lists them.
 All waits are defined in SIMULATED seconds and converted with SPEEDUP.
+
+Environment variables:
+  SPEEDUP             simulated seconds per real second (default 120)
+  SEED                random seed (default 1)
+  LABELS_PATH         where labels.csv is written
+  OWNERSHIP_PATH      ownership export, required for the uuid and write attackers
+  ATTACKS             comma list: sequential,slow,uuid,write
+  ATTACKERS_PER_TYPE  attacker users per attack type (default 2)
+  ATTACK_WAIT_HOURS   "low,high" simulated hours between attack episodes (default 4,10)
 """
 import csv
 import json
@@ -21,6 +30,10 @@ SEED = int(os.environ.get("SEED", "1"))
 LABELS_PATH = os.environ.get("LABELS_PATH", "datasets/labels.csv")
 ATTACKS = {a.strip() for a in os.environ.get("ATTACKS", "").split(",") if a.strip()}
 OWNERSHIP_PATH = os.environ.get("OWNERSHIP_PATH", "")
+ATTACKERS_PER_TYPE = int(os.environ.get("ATTACKERS_PER_TYPE", "2"))
+ATTACK_WAIT_HOURS = tuple(
+    float(x) for x in os.environ.get("ATTACK_WAIT_HOURS", "4,10").split(",")
+)
 SIM_START = datetime(2026, 11, 1, 8, 0, 0, tzinfo=timezone.utc)
 
 NORMAL_USERS = ["alice", "bob", "carol", "dave", "erin"]
@@ -223,7 +236,8 @@ class ExporterUser(LabUser):
 class AttackerUser(LabUser):
     abstract = True
     scenario = "attacker_idle"
-    wait_time = wait_sim(14400, 36000)  # 4-10 simulated hours between attack episodes
+    # simulated hours between attack episodes, from ATTACK_WAIT_HOURS
+    wait_time = wait_sim(ATTACK_WAIT_HOURS[0] * 3600, ATTACK_WAIT_HOURS[1] * 3600)
 
     def on_start(self):
         super().on_start()
@@ -242,7 +256,7 @@ class AttackerUser(LabUser):
 if "sequential" in ATTACKS:
 
     class SequentialEnumerator(AttackerUser):
-        fixed_count = 2
+        fixed_count = ATTACKERS_PER_TYPE
 
         @task
         def enumerate_invoices(self):
@@ -261,8 +275,7 @@ if "sequential" in ATTACKS:
 if "slow" in ATTACKS:
 
     class SlowAndLowEnumerator(AttackerUser):
-        fixed_count = 2
-        wait_time = wait_sim(7200, 21600)  # 2-6 simulated hours between episodes
+        fixed_count = ATTACKERS_PER_TYPE
 
         @task
         def enumerate_slowly(self):
@@ -280,7 +293,7 @@ if "slow" in ATTACKS:
 if "uuid" in ATTACKS:
 
     class UuidAttacker(AttackerUser):
-        fixed_count = 2
+        fixed_count = ATTACKERS_PER_TYPE
 
         @task
         def read_leaked_documents(self):
@@ -300,7 +313,7 @@ if "uuid" in ATTACKS:
 if "write" in ATTACKS:
 
     class WriteDeleteAttacker(AttackerUser):
-        fixed_count = 2
+        fixed_count = ATTACKERS_PER_TYPE
 
         @task
         def tamper_with_objects(self):

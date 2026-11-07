@@ -16,7 +16,7 @@ USERS = [
 ]
 INVOICES_PER_USER = 30
 ORDERS_PER_USER = 10
-DOCUMENTS_PER_USER = 10
+DOCUMENTS_PER_USER = 40
 
 
 def hash_password(password: str) -> str:
