@@ -63,6 +63,7 @@ class LabUser(HttpUser):
     scenario = "unset"
 
     def on_start(self):
+        self.client.headers["Connection"] = "close"  # avoid stale keep-alive connections
         self.username = self.pick_username()
         self.token = None
         self.last_sim = datetime.min.replace(tzinfo=timezone.utc)
@@ -93,7 +94,7 @@ class LabUser(HttpUser):
             if resp.status_code in expected:
                 resp.success()
             else:
-                resp.failure(f"unexpected status {resp.status_code}")
+                resp.failure(f"unexpected status {resp.status_code}: {getattr(resp, 'error', None)}")
             return resp
 
     def login(self):
