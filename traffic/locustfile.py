@@ -3,8 +3,10 @@
 Every request carries a unique X-Request-ID, a simulated timestamp (X-Sim-Time)
 and a per-user source IP (X-Lab-Source-IP). Ground truth goes to labels.csv.
 Attack scenarios are only active when the ATTACKS environment variable lists them.
+All waits are defined in SIMULATED seconds and converted with SPEEDUP.
 """
 import csv
+import json
 import os
 import random
 import threading
@@ -12,12 +14,13 @@ import time
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from locust import HttpUser, between, events, task
+from locust import HttpUser, events, task
 
 SPEEDUP = float(os.environ.get("SPEEDUP", "120"))  # 1 real second = 120 simulated seconds
 SEED = int(os.environ.get("SEED", "1"))
 LABELS_PATH = os.environ.get("LABELS_PATH", "datasets/labels.csv")
 ATTACKS = {a.strip() for a in os.environ.get("ATTACKS", "").split(",") if a.strip()}
+OWNERSHIP_PATH = os.environ.get("OWNERSHIP_PATH", "")
 SIM_START = datetime(2026, 11, 1, 8, 0, 0, tzinfo=timezone.utc)
 
 NORMAL_USERS = ["alice", "bob", "carol", "dave", "erin"]
@@ -30,6 +33,17 @@ TOTAL_INVOICES = 150  # 5 users x 30 invoices, see seed.py
 random.seed(SEED)
 _state = {"start": None, "file": None, "writer": None}
 _lock = threading.Lock()
+_ownership = {}
+
+
+def real(sim_seconds):
+    """Convert simulated seconds into real seconds."""
+    return sim_seconds / SPEEDUP
+
+
+def wait_sim(low, high):
+    """Locust wait_time given in SIMULATED seconds."""
+    return lambda user: random.uniform(low, high) / SPEEDUP
 
 
 def sim_now() -> datetime:
@@ -43,8 +57,20 @@ def write_label(request_id, label, scenario, actor, sim_time, episode):
             _state["file"].flush()
 
 
+def other_users_objects(kind, username):
+    """IDs of objects owned by other users. Leak assumption: the attacker already
+    knows these IDs (emails, shared links, ...). In the lab they come from the export."""
+    if not _ownership:
+        raise RuntimeError("Set OWNERSHIP_PATH (run scripts/export_ownership.py first)")
+    my_id = _ownership["users"][username]["id"]
+    return [obj_id for obj_id, owner in _ownership[kind].items() if owner != my_id]
+
+
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
+    if OWNERSHIP_PATH:
+        with open(OWNERSHIP_PATH, encoding="utf-8") as f:
+            _ownership.update(json.load(f))
     os.makedirs(os.path.dirname(LABELS_PATH) or ".", exist_ok=True)
     _state["file"] = open(LABELS_PATH, "w", newline="", encoding="utf-8")
     _state["writer"] = csv.writer(_state["file"])
@@ -114,7 +140,7 @@ class LabUser(HttpUser):
 class CasualUser(LabUser):
     weight = 12
     scenario = "casual"
-    wait_time = between(2, 8)
+    wait_time = wait_sim(240, 960)  # 4-16 simulated minutes between actions
 
     @task(6)
     def list_invoices(self):
@@ -145,7 +171,9 @@ class CasualUser(LabUser):
 
     @task(4)
     def view_own_document(self):
-        self.call("GET", f"/documents/{random.choice(self.my_documents)}", "/documents/{id}")
+        # 404 is possible when an attacker deleted the document: normal behavior, not an error
+        self.call("GET", f"/documents/{random.choice(self.my_documents)}", "/documents/{id}",
+                  expected=(200, 404))
 
     @task(1)
     def typo_missing_id(self):
@@ -171,7 +199,7 @@ class PowerUser(CasualUser):
 class ExporterUser(LabUser):
     weight = 1
     scenario = "admin"
-    wait_time = between(300, 600)  # rare: every 10-20 simulated hours
+    wait_time = wait_sim(36000, 72000)  # rare: every 10-20 simulated hours
 
     def pick_username(self):
         return "admin"
@@ -189,16 +217,18 @@ class ExporterUser(LabUser):
 
 # ---------------------------------------------------------------------------
 # Attackers (inactive unless listed in the ATTACKS environment variable)
+# Insider model: the attacker is a normal account using its usual IP.
 # ---------------------------------------------------------------------------
 
 class AttackerUser(LabUser):
     abstract = True
     scenario = "attacker_idle"
-    wait_time = between(120, 300)  # real seconds between attack episodes
+    wait_time = wait_sim(14400, 36000)  # 4-10 simulated hours between attack episodes
 
     def on_start(self):
         super().on_start()
-        time.sleep(random.uniform(60, 240))  # let normal traffic build some history first
+        # let normal traffic build some history first (2-8 simulated hours)
+        time.sleep(real(random.uniform(7200, 28800)))
 
     def start_episode(self, kind):
         self.episode = f"{kind}-{uuid.uuid4().hex[:8]}"
@@ -224,5 +254,69 @@ if "sequential" in ATTACKS:
                 for invoice_id in range(start + 1, start + count):
                     self.call("GET", f"/invoices/{invoice_id}", "/invoices/{id}",
                               gap=random.uniform(0.05, 0.3))
+            finally:
+                self.end_episode()
+
+
+if "slow" in ATTACKS:
+
+    class SlowAndLowEnumerator(AttackerUser):
+        fixed_count = 2
+        wait_time = wait_sim(7200, 21600)  # 2-6 simulated hours between episodes
+
+        @task
+        def enumerate_slowly(self):
+            # one request every 16-40 simulated minutes
+            self.start_episode("slow")
+            try:
+                start = random.randint(1, TOTAL_INVOICES - 39)
+                for invoice_id in range(start, start + 40):
+                    self.call("GET", f"/invoices/{invoice_id}", "/invoices/{id}")
+                    time.sleep(real(random.uniform(960, 2400)))
+            finally:
+                self.end_episode()
+
+
+if "uuid" in ATTACKS:
+
+    class UuidAttacker(AttackerUser):
+        fixed_count = 2
+
+        @task
+        def read_leaked_documents(self):
+            self.start_episode("uuid")
+            try:
+                targets = other_users_objects("documents", self.username)
+                random.shuffle(targets)
+                first, *rest = targets[: random.randint(10, 30)]
+                self.call("GET", f"/documents/{first}", "/documents/{id}", expected=(200, 404))
+                for doc_id in rest:
+                    self.call("GET", f"/documents/{doc_id}", "/documents/{id}",
+                              expected=(200, 404), gap=random.uniform(0.1, 0.5))
+            finally:
+                self.end_episode()
+
+
+if "write" in ATTACKS:
+
+    class WriteDeleteAttacker(AttackerUser):
+        fixed_count = 2
+
+        @task
+        def tamper_with_objects(self):
+            self.start_episode("write")
+            try:
+                orders = random.sample(other_users_objects("orders", self.username),
+                                       k=random.randint(3, 8))
+                documents = random.sample(other_users_objects("documents", self.username),
+                                          k=random.randint(1, 3))
+                self.call("PUT", f"/orders/{orders[0]}", "/orders/{id}",
+                          json={"status": "cancelled"})
+                for order_id in orders[1:]:
+                    self.call("PUT", f"/orders/{order_id}", "/orders/{id}",
+                              json={"status": "cancelled"}, gap=random.uniform(0.5, 3.0))
+                for doc_id in documents:
+                    self.call("DELETE", f"/documents/{doc_id}", "/documents/{id}",
+                              expected=(204, 404), gap=random.uniform(0.5, 3.0))
             finally:
                 self.end_episode()
