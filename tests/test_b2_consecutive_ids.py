@@ -69,3 +69,10 @@ def test_uuid_object_ids_are_ignored():
 def test_one_alert_per_run():
     rule = ConsecutiveIdsRule(window_seconds=3600, min_run=10)
     assert len(run(rule, [ev(i, i, 100 + i) for i in range(40)])) == 1
+
+def test_shorter_quiet_period_allows_a_second_alert():
+    first = [ev(i, i, 100 + i) for i in range(10)]
+    second = [ev(100 + i, 2400 + i, 200 + i) for i in range(10)]  # 40 minutes later, same window
+    events = first + second
+    assert len(run(ConsecutiveIdsRule(window_seconds=8 * 3600, min_run=10), events)) == 1
+    assert len(run(ConsecutiveIdsRule(window_seconds=8 * 3600, min_run=10, quiet_seconds=1800), events)) == 2
