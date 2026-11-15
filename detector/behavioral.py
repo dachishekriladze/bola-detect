@@ -108,3 +108,57 @@ class ConsecutiveIdsRule:
                          f"within {self.window.total_seconds() / 3600:.1f}h"),
             )]
         return []
+
+class FirstAccessRule:
+    """B3: one user touches several objects of one type for the first time.
+
+    The rule learns what each user has accessed. For the first warmup_seconds after a
+    user's first event it only learns and never alerts. Every entry in the evidence is
+    a distinct first-time object.
+    """
+
+    name = "B3_first_access"
+
+    def __init__(self, window_seconds=3600, threshold=5, warmup_seconds=86400, quiet_seconds=1800):
+        self.window = timedelta(seconds=window_seconds)
+        self.threshold = threshold
+        self.warmup = timedelta(seconds=warmup_seconds)
+        self.quiet = timedelta(seconds=quiet_seconds)
+        self._started = {}                 # user -> time of the user's first event
+        self._seen = defaultdict(set)      # user -> {(object type, object id)}
+        self._new = defaultdict(deque)     # (user, type) -> deque of (time, object id, request id)
+        self._quiet_until = {}
+
+    def process(self, event: LogEvent):
+        if event.user_id is None:
+            return []
+        user = event.user_id
+        self._started.setdefault(user, event.timestamp)
+        if event.object_id is None:
+            return []
+        obj = (event.object_type, event.object_id)
+        if obj in self._seen[user]:
+            return []
+        self._seen[user].add(obj)
+        if event.timestamp - self._started[user] < self.warmup:
+            return []
+
+        key = (user, event.object_type)
+        new = self._new[key]
+        new.append((event.timestamp, event.object_id, event.request_id))
+        while new and event.timestamp - new[0][0] > self.window:
+            new.popleft()
+
+        quiet_until = self._quiet_until.get(key)
+        if len(new) >= self.threshold and (quiet_until is None or event.timestamp >= quiet_until):
+            self._quiet_until[key] = event.timestamp + self.quiet
+            return [Alert(
+                rule=self.name,
+                user_id=user,
+                first_event_time=new[0][0],
+                time=event.timestamp,
+                request_ids=tuple(request_id for _, _, request_id in new),
+                details=(f"{len(new)} first-time {event.object_type} accesses "
+                         f"within {self.window.total_seconds() / 3600:.1f}h"),
+            )]
+        return []
