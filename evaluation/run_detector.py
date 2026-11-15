@@ -5,10 +5,16 @@ Usage (from the repo root): python -m evaluation.run_detector datasets\\dev
 import sys
 from datetime import timedelta
 
-from detector.behavioral import ConsecutiveIdsRule, DistinctObjectsRule, FirstAccessRule
+from detector.authorization import UnauthorizedAccessRule
+from detector.behavioral import (ConsecutiveIdsRule, DistinctObjectsRule, FailedRequestsRule,
+                                 FirstAccessRule, RequestRateRule)
 from detector.engine import run_rules
+from detector.policy import Policy
 from evaluation.dataset import load_dataset
 from evaluation.metrics import KINDS, episodes_by_kind, score_alerts
+
+ds = load_dataset(sys.argv[1])
+policy = Policy.from_ownership(ds.ownership)
 
 CONFIGS = [
     # (name, rule factory, warm-up seconds: episodes starting inside it cannot be judged)
@@ -20,11 +26,14 @@ CONFIGS = [
     ("B3 1h, N=3", lambda: FirstAccessRule(3600, 3), 86400),
     ("B3 1h, N=5", lambda: FirstAccessRule(3600, 5), 86400),
     ("B3 1h, N=8", lambda: FirstAccessRule(3600, 8), 86400),
-    ("B3 8h, N=5", lambda: FirstAccessRule(28800, 5), 86400),
-    ("B3 8h, N=10", lambda: FirstAccessRule(28800, 10), 86400),
+    ("B4 rate 60s, 10 req", lambda: RequestRateRule(60, 10), 0),
+    ("B4 rate 60s, 30 req", lambda: RequestRateRule(60, 30), 0),
+    ("B5 4xx 1h, N=3", lambda: FailedRequestsRule(3600, 3), 0),
+    ("B5 4xx 1h, N=5", lambda: FailedRequestsRule(3600, 5), 0),
+    ("A1 unauthorized access", lambda: UnauthorizedAccessRule(policy), 0),
+    ("A1 per request", lambda: UnauthorizedAccessRule(policy, window_seconds=0, quiet_seconds=0), 0),
 ]
 
-ds = load_dataset(sys.argv[1])
 episodes = episodes_by_kind(ds.truth)
 dataset_start = ds.events[0].timestamp
 episode_start = {}

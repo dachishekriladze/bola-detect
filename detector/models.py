@@ -28,3 +28,4 @@ class Alert:
     time: datetime
     request_ids: tuple
     details: str
+    severity: str = "suspicious"

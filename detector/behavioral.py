@@ -164,3 +164,67 @@ class FirstAccessRule:
                          f"within {self.window.total_seconds() / 3600:.1f}h"),
             )]
         return []
+class RequestRateRule:
+    """B4: a user sends many requests within a short window (the rate-limit baseline)."""
+
+    name = "B4_request_rate"
+
+    def __init__(self, window_seconds=60, threshold=30, quiet_seconds=None):
+        self.window = timedelta(seconds=window_seconds)
+        self.threshold = threshold
+        self.quiet = timedelta(seconds=quiet_seconds if quiet_seconds is not None else window_seconds)
+        self._recent = defaultdict(deque)  # user -> deque of (time, request_id)
+        self._quiet_until = {}
+
+    def process(self, event: LogEvent):
+        if event.user_id is None:
+            return []
+        recent = self._recent[event.user_id]
+        recent.append((event.timestamp, event.request_id))
+        while recent and event.timestamp - recent[0][0] > self.window:
+            recent.popleft()
+        quiet_until = self._quiet_until.get(event.user_id)
+        if len(recent) >= self.threshold and (quiet_until is None or event.timestamp >= quiet_until):
+            self._quiet_until[event.user_id] = event.timestamp + self.quiet
+            return [Alert(
+                rule=self.name,
+                user_id=event.user_id,
+                first_event_time=recent[0][0],
+                time=event.timestamp,
+                request_ids=tuple(request_id for _, request_id in recent),
+                details=f"{len(recent)} requests within {self.window.total_seconds():.0f}s",
+            )]
+        return []
+
+
+class FailedRequestsRule:
+    """B5: a user receives many failed (4xx) responses within a window."""
+
+    name = "B5_failed_requests"
+
+    def __init__(self, window_seconds=3600, threshold=5, quiet_seconds=None):
+        self.window = timedelta(seconds=window_seconds)
+        self.threshold = threshold
+        self.quiet = timedelta(seconds=quiet_seconds if quiet_seconds is not None else window_seconds)
+        self._failed = defaultdict(deque)  # user -> deque of (time, request_id)
+        self._quiet_until = {}
+
+    def process(self, event: LogEvent):
+        if event.user_id is None or not 400 <= event.status_code < 500:
+            return []
+        failed = self._failed[event.user_id]
+        failed.append((event.timestamp, event.request_id))
+        while failed and event.timestamp - failed[0][0] > self.window:
+            failed.popleft()
+        quiet_until = self._quiet_until.get(event.user_id)
+        if len(failed) >= self.threshold and (quiet_until is None or event.timestamp >= quiet_until):
+            self._quiet_until[event.user_id] = event.timestamp + self.quiet
+            return [Alert(
+                rule=self.name,
+                user_id=event.user_id,
+                first_event_time=failed[0][0],
+                time=event.timestamp,
+                request_ids=tuple(request_id for _, request_id in failed),
+                details=f"{len(failed)} failed requests within {self.window.total_seconds() / 60:.0f} min",
+            )]
+        return []
