@@ -136,6 +136,8 @@ class FirstAccessRule:
         self._started.setdefault(user, event.timestamp)
         if event.object_id is None:
             return []
+        if not event.succeeded:
+            return []  # a failed request touched no object, so random typo IDs are not new objects
         obj = (event.object_type, event.object_id)
         if obj in self._seen[user]:
             return []

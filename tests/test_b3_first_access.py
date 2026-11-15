@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from detector.behavioral import FirstAccessRule
+from dataclasses import replace
 from detector.models import LogEvent
 
 T0 = datetime(2026, 11, 1, 8, 0, tzinfo=timezone.utc)
@@ -82,3 +83,8 @@ def test_second_burst_after_quiet_period_alerts_again():
     events += [ev(10 + i, AFTER_WARMUP + i, 100 + i) for i in range(5)]
     events += [ev(50 + i, AFTER_WARMUP + 7200 + i, 200 + i) for i in range(5)]
     assert len(run(make_rule(), events)) == 2
+
+def test_failed_requests_do_not_count_as_first_time_accesses():
+    events = [ev(0, 0, 1)]
+    events += [replace(ev(10 + i, AFTER_WARMUP + i, 100 + i), status_code=404) for i in range(10)]
+    assert run(make_rule(), events) == []
