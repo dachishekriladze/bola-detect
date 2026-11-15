@@ -1,0 +1,299 @@
+{
+ "frozen": {
+  "B1": {
+   "rule": "B1",
+   "window": 60,
+   "threshold": 40
+  },
+  "B2": {
+   "rule": "B2",
+   "window": 28800,
+   "run": 5,
+   "quiet": "window"
+  },
+  "B3": {
+   "rule": "B3",
+   "window": 3600,
+   "threshold": 3
+  },
+  "B4": {
+   "rule": "B4",
+   "window": 60,
+   "threshold": 10
+  },
+  "B5": {
+   "rule": "B5",
+   "window": 3600,
+   "threshold": 5
+  }
+ },
+ "behavioral": {
+  "B1": {
+   "config": {
+    "rule": "B1",
+    "window": 60,
+    "threshold": 40
+   },
+   "hits": {
+    "sequential": 22,
+    "slow": 0,
+    "uuid": 0,
+    "write": 0
+   },
+   "eligible": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "detected": 22,
+   "total": 80,
+   "false_incidents": 28,
+   "alerts": 54,
+   "incidents": 50,
+   "recall": 0.275,
+   "precision": 0.44,
+   "f1": 0.3384615384615385,
+   "false_per_day": 2.7800643503679514
+  },
+  "B2": {
+   "config": {
+    "rule": "B2",
+    "window": 28800,
+    "run": 5,
+    "quiet": "window"
+   },
+   "hits": {
+    "sequential": 21,
+    "slow": 15,
+    "uuid": 0,
+    "write": 0
+   },
+   "eligible": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "detected": 36,
+   "total": 80,
+   "false_incidents": 16,
+   "alerts": 78,
+   "incidents": 78,
+   "recall": 0.45,
+   "precision": 0.6923076923076923,
+   "f1": 0.5454545454545455,
+   "false_per_day": 1.588608200210258
+  },
+  "B3": {
+   "config": {
+    "rule": "B3",
+    "window": 3600,
+    "threshold": 3
+   },
+   "hits": {
+    "sequential": 7,
+    "slow": 7,
+    "uuid": 18,
+    "write": 11
+   },
+   "eligible": {
+    "sequential": 19,
+    "slow": 12,
+    "uuid": 19,
+    "write": 18
+   },
+   "detected": 43,
+   "total": 68,
+   "false_incidents": 4,
+   "alerts": 66,
+   "incidents": 54,
+   "recall": 0.6323529411764706,
+   "precision": 0.9148936170212766,
+   "f1": 0.7478260869565218,
+   "false_per_day": 0.4409312361442939
+  },
+  "B4": {
+   "config": {
+    "rule": "B4",
+    "window": 60,
+    "threshold": 10
+   },
+   "hits": {
+    "sequential": 22,
+    "slow": 0,
+    "uuid": 21,
+    "write": 5
+   },
+   "eligible": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "detected": 48,
+   "total": 80,
+   "false_incidents": 141,
+   "alerts": 244,
+   "incidents": 186,
+   "recall": 0.6,
+   "precision": 0.25396825396825395,
+   "f1": 0.35687732342007433,
+   "false_per_day": 13.999609764352897
+  },
+  "B5": {
+   "config": {
+    "rule": "B5",
+    "window": 3600,
+    "threshold": 5
+   },
+   "hits": {
+    "sequential": 0,
+    "slow": 0,
+    "uuid": 2,
+    "write": 0
+   },
+   "eligible": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "detected": 2,
+   "total": 80,
+   "false_incidents": 77,
+   "alerts": 79,
+   "incidents": 79,
+   "recall": 0.025,
+   "precision": 0.02531645569620253,
+   "f1": 0.025157232704402514,
+   "false_per_day": 7.645176963511866
+  }
+ },
+ "a1": {
+  "hits": {
+   "sequential": 22,
+   "slow": 15,
+   "uuid": 22,
+   "write": 21
+  },
+  "eligible": {
+   "sequential": 22,
+   "slow": 15,
+   "uuid": 22,
+   "write": 21
+  },
+  "tp": 2140,
+  "fp": 0,
+  "flagged": 2140,
+  "violations": 2140,
+  "non_violations": 47294,
+  "days": 10.071709310000001
+ },
+ "degradation": [
+  {
+   "case": "complete data",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "recall": 1.0,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "10% of objects missing",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "recall": 0.8934579439252337,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "30% of objects missing",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "recall": 0.6968224299065421,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "50% of objects missing",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 20.4
+   },
+   "recall": 0.5101869158878505,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "70% of objects missing",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 19.2
+   },
+   "recall": 0.3053271028037383,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "5% of owners wrong",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "recall": 0.9850467289719625,
+   "precision": 0.5705433389695675,
+   "fpr": 0.033611028883156424,
+   "false_per_day": 157.82822469088913
+  },
+  {
+   "case": "10% of owners wrong",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "recall": 0.9720560747663551,
+   "precision": 0.402880023183412,
+   "fpr": 0.06546284941007316,
+   "false_per_day": 307.3956867406849
+  },
+  {
+   "case": "20% of owners wrong",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 22,
+    "write": 21
+   },
+   "recall": 0.9509345794392523,
+   "precision": 0.23941393227873906,
+   "fpr": 0.13747198376115363,
+   "false_per_day": 645.5309421554383
+  }
+ ]
+}

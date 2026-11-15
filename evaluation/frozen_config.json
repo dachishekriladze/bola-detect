@@ -1,0 +1,28 @@
+{
+ "B1": {
+  "rule": "B1",
+  "window": 60,
+  "threshold": 40
+ },
+ "B2": {
+  "rule": "B2",
+  "window": 28800,
+  "run": 5,
+  "quiet": "window"
+ },
+ "B3": {
+  "rule": "B3",
+  "window": 3600,
+  "threshold": 3
+ },
+ "B4": {
+  "rule": "B4",
+  "window": 60,
+  "threshold": 10
+ },
+ "B5": {
+  "rule": "B5",
+  "window": 3600,
+  "threshold": 5
+ }
+}

@@ -61,3 +61,12 @@ def score_alerts(alerts, truth, incident_gap_seconds=3600):
         "false_by_scenario": dict(sorted(Counter(i["scenario"] for i in false_incidents).items())),
         "detected": detected,
     }
+def wilson(k, n, z=1.96):
+    """95% Wilson score interval for a proportion k/n."""
+    if n == 0:
+        return float("nan"), float("nan")
+    p = k / n
+    denominator = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / denominator
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / denominator
+    return max(0.0, centre - half), min(1.0, centre + half)
