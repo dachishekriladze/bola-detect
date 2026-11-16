@@ -1,19 +1,3 @@
-"""Traffic generator for the bola-detect lab (Locust).
-
-Every request carries a unique X-Request-ID, a simulated timestamp (X-Sim-Time)
-and a per-user source IP (X-Lab-Source-IP). Ground truth goes to labels.csv.
-Attack scenarios are only active when the ATTACKS environment variable lists them.
-All waits are defined in SIMULATED seconds and converted with SPEEDUP.
-
-Environment variables:
-  SPEEDUP             simulated seconds per real second (default 120)
-  SEED                random seed (default 1)
-  LABELS_PATH         where labels.csv is written
-  OWNERSHIP_PATH      ownership export, required for the uuid and write attackers
-  ATTACKS             comma list: sequential,slow,uuid,write
-  ATTACKERS_PER_TYPE  attacker users per attack type (default 2)
-  ATTACK_WAIT_HOURS   "low,high" simulated hours between attack episodes (default 4,10)
-"""
 import csv
 import json
 import os
@@ -25,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 from locust import HttpUser, events, task
 
-SPEEDUP = float(os.environ.get("SPEEDUP", "120"))  # 1 real second = 120 simulated seconds
+SPEEDUP = float(os.environ.get("SPEEDUP", "120"))
 SEED = int(os.environ.get("SEED", "1"))
 LABELS_PATH = os.environ.get("LABELS_PATH", "datasets/labels.csv")
 ATTACKS = {a.strip() for a in os.environ.get("ATTACKS", "").split(",") if a.strip()}
@@ -41,7 +25,7 @@ SOURCE_IPS = {
     "alice": "10.0.1.11", "bob": "10.0.1.12", "carol": "10.0.1.13",
     "dave": "10.0.1.14", "erin": "10.0.1.15", "admin": "10.0.9.1",
 }
-TOTAL_INVOICES = 150  # 5 users x 30 invoices, see seed.py
+TOTAL_INVOICES = 150
 
 random.seed(SEED)
 _state = {"start": None, "file": None, "writer": None}
@@ -50,12 +34,10 @@ _ownership = {}
 
 
 def real(sim_seconds):
-    """Convert simulated seconds into real seconds."""
     return sim_seconds / SPEEDUP
 
 
 def wait_sim(low, high):
-    """Locust wait_time given in SIMULATED seconds."""
     return lambda user: random.uniform(low, high) / SPEEDUP
 
 
@@ -71,8 +53,6 @@ def write_label(request_id, label, scenario, actor, sim_time, episode):
 
 
 def other_users_objects(kind, username):
-    """IDs of objects owned by other users. Leak assumption: the attacker already
-    knows these IDs (emails, shared links, ...). In the lab they come from the export."""
     if not _ownership:
         raise RuntimeError("Set OWNERSHIP_PATH (run scripts/export_ownership.py first)")
     my_id = _ownership["users"][username]["id"]
@@ -103,7 +83,7 @@ class LabUser(HttpUser):
     scenario = "unset"
 
     def on_start(self):
-        self.client.headers["Connection"] = "close"  # avoid stale keep-alive connections
+        self.client.headers["Connection"] = "close"
         self.username = self.pick_username()
         self.token = None
         self.episode = ""
@@ -116,7 +96,7 @@ class LabUser(HttpUser):
 
     def call(self, method, path, name, scenario=None, expected=(200, 204), gap=None, **kwargs):
         request_id = str(uuid.uuid4())
-        if gap is not None:  # inside a burst: simulated time advances by a small gap
+        if gap is not None:
             when = self.last_sim + timedelta(seconds=gap)
         else:
             when = max(sim_now(), self.last_sim + timedelta(milliseconds=1))
@@ -153,7 +133,7 @@ class LabUser(HttpUser):
 class CasualUser(LabUser):
     weight = 12
     scenario = "casual"
-    wait_time = wait_sim(240, 960)  # 4-16 simulated minutes between actions
+    wait_time = wait_sim(240, 960)
 
     @task(6)
     def list_invoices(self):
@@ -184,13 +164,13 @@ class CasualUser(LabUser):
 
     @task(4)
     def view_own_document(self):
-        # 404 is possible when an attacker deleted the document: normal behavior, not an error
+
         self.call("GET", f"/documents/{random.choice(self.my_documents)}", "/documents/{id}",
                   expected=(200, 404))
 
     @task(1)
     def typo_missing_id(self):
-        # normal user mistypes an ID: a harmless 404, labeled normal on purpose
+
         self.call("GET", f"/invoices/{random.randint(1000, 9999)}", "/invoices/{id}",
                   scenario="typo_404", expected=(404,))
 
@@ -201,7 +181,7 @@ class PowerUser(CasualUser):
 
     @task(2)
     def read_many_own_invoices(self):
-        # legitimate burst: many distinct IDs, but all of them the user's own
+
         ids = sorted(random.sample(self.my_invoices, k=random.randint(10, len(self.my_invoices))))
         self.call("GET", f"/invoices/{ids[0]}", "/invoices/{id}", scenario="power_burst")
         for invoice_id in ids[1:]:
@@ -212,14 +192,14 @@ class PowerUser(CasualUser):
 class ExporterUser(LabUser):
     weight = 1
     scenario = "admin"
-    wait_time = wait_sim(36000, 72000)  # rare: every 10-20 simulated hours
+    wait_time = wait_sim(36000, 72000)
 
     def pick_username(self):
         return "admin"
 
     @task
     def export_invoices(self):
-        # legitimate admin bulk export: consecutive IDs across all users
+
         start = random.randint(1, TOTAL_INVOICES - 59)
         count = random.randint(40, 60)
         self.call("GET", f"/invoices/{start}", "/invoices/{id}", scenario="admin_export")
@@ -228,20 +208,15 @@ class ExporterUser(LabUser):
                       scenario="admin_export", gap=random.uniform(0.1, 0.5))
 
 
-# ---------------------------------------------------------------------------
-# Attackers (inactive unless listed in the ATTACKS environment variable)
-# Insider model: the attacker is a normal account using its usual IP.
-# ---------------------------------------------------------------------------
-
 class AttackerUser(LabUser):
     abstract = True
     scenario = "attacker_idle"
-    # simulated hours between attack episodes, from ATTACK_WAIT_HOURS
+
     wait_time = wait_sim(ATTACK_WAIT_HOURS[0] * 3600, ATTACK_WAIT_HOURS[1] * 3600)
 
     def on_start(self):
         super().on_start()
-        # let normal traffic build some history first (2-8 simulated hours)
+
         time.sleep(real(random.uniform(7200, 28800)))
 
     def start_episode(self, kind):
@@ -279,7 +254,7 @@ if "slow" in ATTACKS:
 
         @task
         def enumerate_slowly(self):
-            # one request every 16-40 simulated minutes
+
             self.start_episode("slow")
             try:
                 start = random.randint(1, TOTAL_INVOICES - 39)

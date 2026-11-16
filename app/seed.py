@@ -28,18 +28,18 @@ def hash_password(password: str) -> str:
 def seed():
     with SessionLocal() as db:
         if db.scalar(select(func.count()).select_from(User)) > 0:
-            return  # already seeded
+            return
 
         users = []
         for name, role in USERS:
             user = User(username=name, password_hash=hash_password(f"{name}-pass"), role=role)
             db.add(user)
             users.append(user)
-        db.flush()  # assigns user IDs
+        db.flush()
 
         owners = [u for u in users if u.role == "user"]
 
-        # Round-robin creation, so IDs are interleaved between owners
+
         for i in range(1, INVOICES_PER_USER + 1):
             for u in owners:
                 db.add(Invoice(owner_id=u.id, amount_cents=1000 * i,

@@ -38,7 +38,7 @@ def test_normal_pace_does_not_trigger_the_rate_rule():
 
 
 def test_rate_is_counted_per_user():
-    events = [ev(i, i, user=1 + i % 2) for i in range(40)]  # 20 requests each
+    events = [ev(i, i, user=1 + i % 2) for i in range(40)]
     assert run(RequestRateRule(60, 30), events) == []
 
 
@@ -70,5 +70,5 @@ def test_failures_spread_over_time_do_not_alert():
 
 
 def test_failures_are_counted_per_user():
-    events = [ev(i, i, user=1 + i % 2, status=403) for i in range(8)]  # 4 each
+    events = [ev(i, i, user=1 + i % 2, status=403) for i in range(8)]
     assert run(FailedRequestsRule(3600, 5), events) == []

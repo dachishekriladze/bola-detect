@@ -4,7 +4,6 @@ from datetime import datetime
 
 @dataclass(frozen=True)
 class LogEvent:
-    """Exactly what the application logged. The only input a detector may see."""
     request_id: str
     timestamp: datetime
     user_id: int | None

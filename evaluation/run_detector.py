@@ -1,7 +1,3 @@
-"""Evaluate rule configurations on a dataset (tune on datasets\\dev only).
-
-Usage (from the repo root): python -m evaluation.run_detector datasets\\dev
-"""
 import sys
 from datetime import timedelta
 
@@ -17,7 +13,7 @@ ds = load_dataset(sys.argv[1])
 policy = Policy.from_ownership(ds.ownership)
 
 CONFIGS = [
-    # (name, rule factory, warm-up seconds: episodes starting inside it cannot be judged)
+
     ("B1 60s, thr 20", lambda: DistinctObjectsRule(60, 20), 0),
     ("B1 60s, thr 40", lambda: DistinctObjectsRule(60, 40), 0),
     ("B2 1h, run 10", lambda: ConsecutiveIdsRule(3600, 10), 0),

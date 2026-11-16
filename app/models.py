@@ -17,7 +17,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(50), unique=True)
     password_hash: Mapped[str] = mapped_column(String(200))
-    role: Mapped[str] = mapped_column(String(20), default="user")  # user | admin
+    role: Mapped[str] = mapped_column(String(20), default="user")
 
 
 class Invoice(Base):

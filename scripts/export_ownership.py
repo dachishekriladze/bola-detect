@@ -1,9 +1,3 @@
-"""Export who owns what from the lab database (the ownership table).
-
-Used by the leak-based attackers now, and by the authorization-aware detector later.
-Run after reset_lab.ps1 and before the traffic run:
-    python scripts\\export_ownership.py datasets\\<name>\\ownership.json
-"""
 import json
 import subprocess
 import sys

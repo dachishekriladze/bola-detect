@@ -1,6 +1,3 @@
-"""Diagnose B3: do missed episodes simply contain too few first-time objects?
-Usage (from the repo root): python -m evaluation.inspect_b3 datasets\\dev
-"""
 import sys
 from collections import defaultdict
 
@@ -17,7 +14,7 @@ detected = score_alerts(alerts, ds.truth)["detected"]
 seen = defaultdict(set)
 new_in_episode = defaultdict(int)
 start = {}
-for event in ds.events:  # already sorted by time
+for event in ds.events:
     truth = ds.truth[event.request_id]
     if truth.episode:
         start.setdefault(truth.episode, event.timestamp)

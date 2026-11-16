@@ -3,7 +3,6 @@ from detector.behavioral import (ConsecutiveIdsRule, DistinctObjectsRule, Failed
 
 
 def make_rule(cfg):
-    """Build a behavioral rule from a configuration dict (see evaluation/frozen_config.json)."""
     kind = cfg["rule"]
     if kind == "B1":
         return DistinctObjectsRule(cfg["window"], cfg["threshold"])

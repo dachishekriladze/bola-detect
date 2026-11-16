@@ -83,6 +83,6 @@ def test_missing_ownership_data_hides_violations():
 
 
 def test_wrong_ownership_data_creates_false_violations():
-    degraded = POLICY.with_wrong_owners(1.0)  # every owner replaced by another regular user
+    degraded = POLICY.with_wrong_owners(1.0)
     alerts = run(UnauthorizedAccessRule(degraded), [ev(0, 0, user=1, object_id="1")])
-    assert len(alerts) == 1  # user 1 reads their own invoice, but the data says it is user 2's
+    assert len(alerts) == 1

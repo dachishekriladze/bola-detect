@@ -5,7 +5,7 @@ from dataclasses import replace
 from detector.models import LogEvent
 
 T0 = datetime(2026, 11, 1, 8, 0, tzinfo=timezone.utc)
-AFTER_WARMUP = 90000  # seconds; the warm-up in these tests is 86400
+AFTER_WARMUP = 90000
 
 
 def ev(i, seconds, object_id, user=1, object_type="invoice"):
@@ -41,7 +41,7 @@ def test_first_time_accesses_during_warmup_do_not_alert():
 
 
 def test_first_time_accesses_after_warmup_alert_once():
-    events = [ev(0, 0, 1)]  # the user's first event starts the warm-up
+    events = [ev(0, 0, 1)]
     events += [ev(10 + i, AFTER_WARMUP + i, 100 + i) for i in range(8)]
     alerts = run(make_rule(), events)
     assert len(alerts) == 1
@@ -49,20 +49,20 @@ def test_first_time_accesses_after_warmup_alert_once():
 
 
 def test_objects_seen_during_warmup_are_not_new_later():
-    events = [ev(i, i, i) for i in range(10)]                          # learned during warm-up
-    events += [ev(100 + i, AFTER_WARMUP + i, i) for i in range(10)]    # read again later
+    events = [ev(i, i, i) for i in range(10)]
+    events += [ev(100 + i, AFTER_WARMUP + i, i) for i in range(10)]
     assert run(make_rule(), events) == []
 
 
 def test_first_time_accesses_spread_over_hours_do_not_alert():
     events = [ev(0, 0, 1)]
-    events += [ev(10 + i, AFTER_WARMUP + i * 7200, 100 + i) for i in range(10)]  # one every 2 hours
+    events += [ev(10 + i, AFTER_WARMUP + i * 7200, 100 + i) for i in range(10)]
     assert run(make_rule(), events) == []
 
 
 def test_users_are_counted_separately():
     events = [ev(0, 0, 1, user=1), ev(1, 0, 1, user=2)]
-    events += [ev(10 + i, AFTER_WARMUP + i, 100 + i, user=1 + i % 2) for i in range(8)]  # 4 each
+    events += [ev(10 + i, AFTER_WARMUP + i, 100 + i, user=1 + i % 2) for i in range(8)]
     assert run(make_rule(), events) == []
 
 

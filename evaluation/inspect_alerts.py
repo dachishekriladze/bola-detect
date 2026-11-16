@@ -1,6 +1,3 @@
-"""Show the false alerts of the leading B2 configuration.
-Usage (from the repo root): python -m evaluation.inspect_alerts datasets\\dev
-"""
 import sys
 from collections import Counter
 

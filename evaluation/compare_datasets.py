@@ -1,6 +1,3 @@
-"""Check that SPEEDUP does not change the simulated behavior.
-Usage: python evaluation\\compare_datasets.py <app_a.jsonl> <app_b.jsonl>
-"""
 import json
 import sys
 from collections import Counter, defaultdict

@@ -33,8 +33,6 @@ def me(user: User = Depends(get_current_user)):
     return user
 
 
-# ---------- invoices (integer IDs) ----------
-
 @router.get("/invoices", response_model=list[InvoiceOut])
 def list_my_invoices(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return db.scalars(
@@ -42,14 +40,12 @@ def list_my_invoices(user: User = Depends(get_current_user), db: Session = Depen
     ).all()
 
 
-# VULNERABLE (BOLA, read): any logged-in user can read any invoice
 @router.get("/invoices/{invoice_id}", response_model=InvoiceOut)
 def get_invoice(invoice_id: int, user: User = Depends(get_current_user),
                 db: Session = Depends(get_db)):
     return get_or_404(db, Invoice, invoice_id)
 
 
-# SAFE (contrast): checks ownership, owner or admin only
 @router.put("/invoices/{invoice_id}", response_model=InvoiceOut)
 def update_invoice(invoice_id: int, body: InvoiceUpdate,
                    user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -62,8 +58,6 @@ def update_invoice(invoice_id: int, body: InvoiceUpdate,
     return invoice
 
 
-# ---------- orders (integer IDs) ----------
-
 @router.get("/orders", response_model=list[OrderOut])
 def list_my_orders(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return db.scalars(
@@ -71,14 +65,12 @@ def list_my_orders(user: User = Depends(get_current_user), db: Session = Depends
     ).all()
 
 
-# VULNERABLE (BOLA, read)
 @router.get("/orders/{order_id}", response_model=OrderOut)
 def get_order(order_id: int, user: User = Depends(get_current_user),
               db: Session = Depends(get_db)):
     return get_or_404(db, Order, order_id)
 
 
-# VULNERABLE (BOLA, write): any logged-in user can change any order
 @router.put("/orders/{order_id}", response_model=OrderOut)
 def update_order(order_id: int, body: OrderUpdate,
                  user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -89,8 +81,6 @@ def update_order(order_id: int, body: OrderUpdate,
     return order
 
 
-# ---------- documents (UUID IDs) ----------
-
 @router.get("/documents", response_model=list[DocumentOut])
 def list_my_documents(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return db.scalars(
@@ -98,14 +88,12 @@ def list_my_documents(user: User = Depends(get_current_user), db: Session = Depe
     ).all()
 
 
-# VULNERABLE (BOLA, read)
 @router.get("/documents/{document_id}", response_model=DocumentOut)
 def get_document(document_id: uuid.UUID, user: User = Depends(get_current_user),
                  db: Session = Depends(get_db)):
     return get_or_404(db, Document, document_id)
 
 
-# VULNERABLE (BOLA, delete)
 @router.delete("/documents/{document_id}", status_code=204)
 def delete_document(document_id: uuid.UUID, user: User = Depends(get_current_user),
                     db: Session = Depends(get_db)):

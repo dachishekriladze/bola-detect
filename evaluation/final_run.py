@@ -12,7 +12,7 @@ from evaluation.dataset import load_dataset
 from evaluation.metrics import KINDS, episodes_by_kind, score_alerts, wilson
 
 FROZEN = Path("evaluation/frozen_config.json")
-WARMUP = {"B3": 86400}  # episodes starting inside a rule's warm-up cannot be judged
+WARMUP = {"B3": 86400}
 
 GRID = {
     "B1": [{"rule": "B1", "window": 60, "threshold": t} for t in (10, 15, 20, 30, 40)],

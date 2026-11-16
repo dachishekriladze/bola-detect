@@ -7,10 +7,9 @@ KIND = {"invoice": "invoices", "order": "orders", "document": "documents"}
 
 @dataclass(frozen=True)
 class Policy:
-    """Who owns what, and who is an admin. The authorization data that A1 relies on."""
-    owners: dict      # (object_type, object_id) -> owner user id
+    owners: dict
     admins: frozenset
-    users: frozenset  # ids of regular users
+    users: frozenset
 
     @classmethod
     def from_ownership(cls, ownership):
@@ -35,7 +34,6 @@ class Policy:
         return user_id in self.admins
 
     def without_objects(self, fraction, seed=0):
-        """Incomplete ownership data: a fraction of the objects is unknown."""
         rng = random.Random(seed)
         keys = sorted(self.owners)
         dropped = set(rng.sample(keys, round(len(keys) * fraction)))
@@ -43,7 +41,6 @@ class Policy:
                       self.admins, self.users)
 
     def with_wrong_owners(self, fraction, seed=0):
-        """Stale ownership data: a fraction of the objects has the wrong owner."""
         rng = random.Random(seed)
         keys = sorted(self.owners)
         wrong = set(rng.sample(keys, round(len(keys) * fraction)))

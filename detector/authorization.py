@@ -6,12 +6,6 @@ from detector.policy import Policy
 
 
 class UnauthorizedAccessRule:
-    """A1: a user touched an object that belongs to someone else (and is not an admin).
-
-    Uses the ownership data in the policy as an independent second check. The alert is
-    'confirmed' when a violating request succeeded (2xx), otherwise 'attempted'.
-    Objects unknown to the policy are ignored. One alert per user per quiet period.
-    """
 
     name = "A1_unauthorized_access"
 
@@ -20,7 +14,7 @@ class UnauthorizedAccessRule:
         self.window = timedelta(seconds=window_seconds)
         self.min_violations = min_violations
         self.quiet = timedelta(seconds=quiet_seconds)
-        self._recent = defaultdict(deque)  # user -> deque of (time, request_id, succeeded)
+        self._recent = defaultdict(deque)
         self._quiet_until = {}
 
     def process(self, event: LogEvent):

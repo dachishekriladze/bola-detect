@@ -36,11 +36,11 @@ def test_consecutive_run_alerts():
 
 def test_ids_with_a_gap_between_them_do_not_alert():
     rule = ConsecutiveIdsRule(window_seconds=3600, min_run=10)
-    assert run(rule, [ev(i, i * 60, i * 5) for i in range(30)]) == []  # step 5, like interleaved owners
+    assert run(rule, [ev(i, i * 60, i * 5) for i in range(30)]) == []
 
 
 def test_slow_run_needs_a_long_enough_window():
-    events = [ev(i, i * 1800, 100 + i) for i in range(12)]  # one request every 30 minutes
+    events = [ev(i, i * 1800, 100 + i) for i in range(12)]
     assert len(run(ConsecutiveIdsRule(window_seconds=8 * 3600, min_run=10), events)) == 1
     assert run(ConsecutiveIdsRule(window_seconds=3600, min_run=10), events) == []
 
@@ -49,14 +49,14 @@ def test_other_requests_in_between_do_not_break_the_run():
     rule = ConsecutiveIdsRule(window_seconds=3600, min_run=10)
     events = []
     for k in range(10):
-        events.append(ev(k, 2 * k, 100 + k))              # the enumeration
-        events.append(ev(1000 + k, 2 * k + 1, 5 * (k + 1)))  # the user's own normal requests
+        events.append(ev(k, 2 * k, 100 + k))
+        events.append(ev(1000 + k, 2 * k + 1, 5 * (k + 1)))
     assert len(run(rule, events)) == 1
 
 
 def test_users_are_counted_separately():
     rule = ConsecutiveIdsRule(window_seconds=3600, min_run=10)
-    events = [ev(i, i, 100 + i, user=1 + i % 2) for i in range(30)]  # each user gets every second id
+    events = [ev(i, i, 100 + i, user=1 + i % 2) for i in range(30)]
     assert run(rule, events) == []
 
 
@@ -72,7 +72,7 @@ def test_one_alert_per_run():
 
 def test_shorter_quiet_period_allows_a_second_alert():
     first = [ev(i, i, 100 + i) for i in range(10)]
-    second = [ev(100 + i, 2400 + i, 200 + i) for i in range(10)]  # 40 minutes later, same window
+    second = [ev(100 + i, 2400 + i, 200 + i) for i in range(10)]
     events = first + second
     assert len(run(ConsecutiveIdsRule(window_seconds=8 * 3600, min_run=10), events)) == 1
     assert len(run(ConsecutiveIdsRule(window_seconds=8 * 3600, min_run=10, quiet_seconds=1800), events)) == 2

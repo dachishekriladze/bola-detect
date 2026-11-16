@@ -30,7 +30,7 @@ def run(rule, events):
 
 def test_fast_enumeration_alerts_once():
     rule = DistinctObjectsRule(window_seconds=60, threshold=20)
-    alerts = run(rule, [ev(i, i) for i in range(40)])  # one request per second
+    alerts = run(rule, [ev(i, i) for i in range(40)])
     assert len(alerts) == 1
     assert alerts[0].user_id == 1
     assert len(alerts[0].request_ids) >= 20
@@ -38,7 +38,7 @@ def test_fast_enumeration_alerts_once():
 
 def test_slow_activity_does_not_alert():
     rule = DistinctObjectsRule(window_seconds=60, threshold=20)
-    assert run(rule, [ev(i, i * 600) for i in range(40)]) == []  # every 10 minutes
+    assert run(rule, [ev(i, i * 600) for i in range(40)]) == []
 
 
 def test_repeating_one_object_does_not_alert():
@@ -48,7 +48,7 @@ def test_repeating_one_object_does_not_alert():
 
 def test_users_are_counted_separately():
     rule = DistinctObjectsRule(window_seconds=60, threshold=20)
-    events = [ev(i, i, user=1 + i % 2) for i in range(30)]  # 15 distinct ids per user
+    events = [ev(i, i, user=1 + i % 2) for i in range(30)]
     assert run(rule, events) == []
 
 
@@ -61,7 +61,7 @@ def test_object_types_are_counted_separately():
 def test_second_burst_after_quiet_period_alerts_again():
     rule = DistinctObjectsRule(window_seconds=60, threshold=20)
     first = [ev(i, i) for i in range(30)]
-    second = [ev(100 + i, 3600 + i) for i in range(30)]  # one hour later
+    second = [ev(100 + i, 3600 + i) for i in range(30)]
     assert len(run(rule, first + second)) == 2
 
 

@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from sqlalchemy import text
 
-import models  # noqa: F401  (registers the tables)
+import models
 from db import Base, engine
 from request_log import event_time, parse_object, user_id_from_header, write_event
 from routes import router

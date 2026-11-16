@@ -7,11 +7,11 @@ import jwt
 
 JWT_SECRET = os.environ["JWT_SECRET"]
 JWT_ALGORITHM = "HS256"
-TOKEN_TTL_MINUTES = 60 * 24  # long on purpose: simulations can run for hours
+TOKEN_TTL_MINUTES = 60 * 24
 
 
 def verify_password(password: str, stored: str) -> bool:
-    # stored format written by seed.py: "<salt hex>$<pbkdf2 hash hex>"
+
     salt_hex, digest_hex = stored.split("$")
     digest = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt_hex), 100_000)
     return hmac.compare_digest(digest.hex(), digest_hex)

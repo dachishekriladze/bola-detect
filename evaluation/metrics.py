@@ -12,11 +12,6 @@ def episodes_by_kind(truth):
 
 
 def classify(alert, truth):
-    """Return (is_true, episode, scenario) for one alert.
-
-    An alert is a true positive when at least half of its evidence requests are attack
-    requests. It detects only the episode that contributes most of that evidence.
-    """
     rows = [truth[r] for r in alert.request_ids]
     attack_rows = [t for t in rows if t.label == "attack"]
     if rows and 2 * len(attack_rows) >= len(rows):
@@ -26,12 +21,6 @@ def classify(alert, truth):
 
 
 def score_alerts(alerts, truth, incident_gap_seconds=3600):
-    """Score alerts per alert and per incident.
-
-    Alerts of the same rule and user whose times are at most incident_gap_seconds apart
-    are merged into one incident, so a long episode that alerts repeatedly counts once.
-    An incident is true when any of its alerts is true.
-    """
     classified, detected = [], set()
     for alert in alerts:
         is_true, episode, scenario = classify(alert, truth)
@@ -62,7 +51,6 @@ def score_alerts(alerts, truth, incident_gap_seconds=3600):
         "detected": detected,
     }
 def wilson(k, n, z=1.96):
-    """95% Wilson score interval for a proportion k/n."""
     if n == 0:
         return float("nan"), float("nan")
     p = k / n

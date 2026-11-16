@@ -1,12 +1,3 @@
-"""Degradation experiment: how does A1 behave when the ownership data is incomplete or wrong?
-
-A1 runs in per-request mode (every violating request is its own alert), so quiet periods
-and mixed evidence cannot hide anything. A request is a true violation when it targets an
-object owned by someone else and the requester is not an admin (the full ownership data).
-
-Usage (from the repo root): python -m evaluation.run_degradation datasets\\dev
-Degraded cases are averaged over 5 random seeds.
-"""
 import sys
 from statistics import mean
 

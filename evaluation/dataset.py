@@ -1,10 +1,3 @@
-"""Load a dataset: logs + labels + ownership.
-
-Detectors may only see LogEvent. Ground truth (Truth) is kept separate, so a detector
-cannot read labels by accident.
-
-Usage (from the repo root): python -m evaluation.dataset datasets\\dev
-"""
 import csv
 import json
 import sys
@@ -20,11 +13,10 @@ KIND = {"invoice": "invoices", "order": "orders", "document": "documents"}
 
 @dataclass(frozen=True)
 class Truth:
-    """Ground truth. Never given to a detector."""
-    label: str          # "normal" or "attack"
+    label: str
     scenario: str
-    episode: str        # empty for normal traffic
-    unauthorized: bool  # requester is neither owner nor admin of an existing object
+    episode: str
+    unauthorized: bool
 
 
 @dataclass
