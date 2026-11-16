@@ -1,0 +1,299 @@
+{
+ "frozen": {
+  "B1": {
+   "rule": "B1",
+   "window": 60,
+   "threshold": 40
+  },
+  "B2": {
+   "rule": "B2",
+   "window": 28800,
+   "run": 5,
+   "quiet": "window"
+  },
+  "B3": {
+   "rule": "B3",
+   "window": 3600,
+   "threshold": 3
+  },
+  "B4": {
+   "rule": "B4",
+   "window": 60,
+   "threshold": 10
+  },
+  "B5": {
+   "rule": "B5",
+   "window": 3600,
+   "threshold": 5
+  }
+ },
+ "behavioral": {
+  "B1": {
+   "config": {
+    "rule": "B1",
+    "window": 60,
+    "threshold": 40
+   },
+   "hits": {
+    "sequential": 22,
+    "slow": 0,
+    "uuid": 0,
+    "write": 0
+   },
+   "eligible": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "detected": 22,
+   "total": 79,
+   "false_incidents": 28,
+   "alerts": 54,
+   "incidents": 48,
+   "recall": 0.27848101265822783,
+   "precision": 0.44,
+   "f1": 0.34108527131782945,
+   "false_per_day": 2.7792976147123736
+  },
+  "B2": {
+   "config": {
+    "rule": "B2",
+    "window": 28800,
+    "run": 5,
+    "quiet": "window"
+   },
+   "hits": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 0,
+    "write": 0
+   },
+   "eligible": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "detected": 37,
+   "total": 79,
+   "false_incidents": 17,
+   "alerts": 78,
+   "incidents": 78,
+   "recall": 0.46835443037974683,
+   "precision": 0.6851851851851852,
+   "f1": 0.5563909774436091,
+   "false_per_day": 1.687430694646798
+  },
+  "B3": {
+   "config": {
+    "rule": "B3",
+    "window": 3600,
+    "threshold": 3
+   },
+   "hits": {
+    "sequential": 3,
+    "slow": 6,
+    "uuid": 18,
+    "write": 8
+   },
+   "eligible": {
+    "sequential": 19,
+    "slow": 12,
+    "uuid": 18,
+    "write": 18
+   },
+   "detected": 35,
+   "total": 67,
+   "false_incidents": 1,
+   "alerts": 69,
+   "incidents": 61,
+   "recall": 0.5223880597014925,
+   "precision": 0.9722222222222222,
+   "f1": 0.6796116504854368,
+   "false_per_day": 0.11019905680079961
+  },
+  "B4": {
+   "config": {
+    "rule": "B4",
+    "window": 60,
+    "threshold": 10
+   },
+   "hits": {
+    "sequential": 22,
+    "slow": 0,
+    "uuid": 21,
+    "write": 2
+   },
+   "eligible": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "detected": 45,
+   "total": 79,
+   "false_incidents": 146,
+   "alerts": 258,
+   "incidents": 188,
+   "recall": 0.569620253164557,
+   "precision": 0.2356020942408377,
+   "f1": 0.33333333333333337,
+   "false_per_day": 14.49205184814309
+  },
+  "B5": {
+   "config": {
+    "rule": "B5",
+    "window": 3600,
+    "threshold": 5
+   },
+   "hits": {
+    "sequential": 0,
+    "slow": 0,
+    "uuid": 4,
+    "write": 0
+   },
+   "eligible": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "detected": 4,
+   "total": 79,
+   "false_incidents": 83,
+   "alerts": 87,
+   "incidents": 87,
+   "recall": 0.05063291139240506,
+   "precision": 0.04597701149425287,
+   "f1": 0.04819277108433735,
+   "false_per_day": 8.23863221504025
+  }
+ },
+ "a1": {
+  "hits": {
+   "sequential": 22,
+   "slow": 15,
+   "uuid": 21,
+   "write": 21
+  },
+  "eligible": {
+   "sequential": 22,
+   "slow": 15,
+   "uuid": 21,
+   "write": 21
+  },
+  "tp": 2013,
+  "fp": 0,
+  "flagged": 2013,
+  "violations": 2013,
+  "non_violations": 47482,
+  "days": 10.074487831666668
+ },
+ "degradation": [
+  {
+   "case": "complete data",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "recall": 1.0,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "10% of objects missing",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "recall": 0.893591654247392,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "30% of objects missing",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "recall": 0.7053154495777447,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "50% of objects missing",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 20.4
+   },
+   "recall": 0.5149528067560855,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "70% of objects missing",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 20.8,
+    "write": 18.2
+   },
+   "recall": 0.30342771982116246,
+   "precision": 1.0,
+   "fpr": 0.0,
+   "false_per_day": 0.0
+  },
+  {
+   "case": "5% of owners wrong",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "recall": 0.9883755588673622,
+   "precision": 0.5492354381733928,
+   "fpr": 0.03475422265279474,
+   "false_per_day": 163.79989013565566
+  },
+  {
+   "case": "10% of owners wrong",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "recall": 0.9719821162444113,
+   "precision": 0.38379264721629947,
+   "fpr": 0.06639568678657175,
+   "false_per_day": 312.9290592907939
+  },
+  {
+   "case": "20% of owners wrong",
+   "episodes": {
+    "sequential": 22,
+    "slow": 15,
+    "uuid": 21,
+    "write": 21
+   },
+   "recall": 0.9492300049677099,
+   "precision": 0.22316640535969395,
+   "fpr": 0.14170001263636747,
+   "false_per_day": 667.845364689564
+  }
+ ]
+}
