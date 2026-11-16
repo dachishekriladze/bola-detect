@@ -5,8 +5,7 @@ from pathlib import Path
 from statistics import mean
 
 from detector.authorization import UnauthorizedAccessRule
-from detector.behavioral import (ConsecutiveIdsRule, DistinctObjectsRule, FailedRequestsRule,
-                                 FirstAccessRule, RequestRateRule)
+from detector.factory import make_rule
 from detector.engine import run_rules
 from detector.policy import Policy
 from evaluation.dataset import load_dataset
@@ -23,23 +22,6 @@ GRID = {
     "B4": [{"rule": "B4", "window": 60, "threshold": t} for t in (10, 20, 30, 40)],
     "B5": [{"rule": "B5", "window": 3600, "threshold": n} for n in (3, 5, 10)],
 }
-
-
-def make_rule(cfg):
-    kind = cfg["rule"]
-    if kind == "B1":
-        return DistinctObjectsRule(cfg["window"], cfg["threshold"])
-    if kind == "B2":
-        quiet = cfg["window"] if cfg["quiet"] == "window" else cfg["quiet"]
-        return ConsecutiveIdsRule(cfg["window"], cfg["run"], quiet)
-    if kind == "B3":
-        return FirstAccessRule(cfg["window"], cfg["threshold"])
-    if kind == "B4":
-        return RequestRateRule(cfg["window"], cfg["threshold"])
-    if kind == "B5":
-        return FailedRequestsRule(cfg["window"], cfg["threshold"])
-    raise ValueError(kind)
-
 
 def describe(cfg):
     return ", ".join(f"{k}={v}" for k, v in cfg.items() if k != "rule")
